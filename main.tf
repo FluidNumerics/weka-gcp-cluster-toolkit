@@ -63,7 +63,7 @@ resource "google_compute_network_peering" "peering" {
 
 
 module "weka_deployment" {
-  source                         = "github.com/weka/terraform-gcp-weka?ref=v4.0.12"
+  source                         = "github.com/fluidnumerics/terraform-gcp-weka"
   cluster_name                   = var.cluster_name
   get_weka_io_token              = var.get_weka_io_token
   project_id                     = var.project_id
