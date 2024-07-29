@@ -77,7 +77,6 @@ module "weka_deployment" {
   vpcs_name                      = var.network_names # From multivpc module
   subnets_name                   = var.subnetwork_names # From multivpc module
   source_image_id                = var.source_image_id
-  containers_config_map          = var.containers_config_map
   protection_level               = var.protection_level
   stripe_width                   = var.stripe_width
   hotspare                       = var.hotspare
@@ -86,7 +85,7 @@ module "weka_deployment" {
   traces_per_ionode              = var.traces_per_ionode
   tiering_obs_name               = var.tiering_obs_name
   tiering_enable_obs_integration = var.tiering_enable_obs_integration
-  tiering_enable_ssd_percent            = var.tiering_ssd_percent
+  tiering_enable_ssd_percent     = var.tiering_ssd_percent
 }
 
 # Resource needed to get ip addresses of the weka backends -- use the lb url
