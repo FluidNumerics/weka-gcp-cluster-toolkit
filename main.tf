@@ -125,7 +125,7 @@ module "weka_deployment" {
   tiering_enable_ssd_percent     = var.tiering_ssd_percent
   private_dns_name               = google_dns_managed_zone.private_zone.dns_name
   private_zone_name              = google_dns_managed_zone.private_zone.name
-  vpc_connector_name             = google_vpc_access_connector.connector.id
+  vpc_connector_id               = google_vpc_access_connector.connector.id
 }
 
 # Resource needed to get ip addresses of the weka backends -- use the lb url
