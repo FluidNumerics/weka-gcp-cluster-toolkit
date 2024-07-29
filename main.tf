@@ -86,7 +86,7 @@ module "weka_deployment" {
   traces_per_ionode              = var.traces_per_ionode
   tiering_obs_name               = var.tiering_obs_name
   tiering_enable_obs_integration = var.tiering_enable_obs_integration
-  tiering_ssd_percent            = var.tiering_ssd_percent
+  tiering_enable_ssd_percent            = var.tiering_ssd_percent
 }
 
 # Resource needed to get ip addresses of the weka backends -- use the lb url
