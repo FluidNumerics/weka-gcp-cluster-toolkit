@@ -51,6 +51,13 @@ locals {
     ]
   ])
   peering_list = [for t in local.temp : t if t["from"] != t["to"]]
+  vpc_connector_region_map = {
+    europe-west4       = "europe-west1"
+    europe-north1      = "europe-west1",
+    us-east5           = "us-east1",
+    southamerica-west1 = "northamerica-northeast1",
+    asia-south2        = "asia-south1",
+  }
 }
 
 # Add bits to set up peering between each vpc network
@@ -61,6 +68,36 @@ resource "google_compute_network_peering" "peering" {
   peer_network = var.network_self_links[local.peering_list[count.index]["to"]]
 }
 
+resource "google_dns_managed_zone" "private_zone" {
+  name        = "${var.prefix}-private-zone"
+  dns_name    = "${var.prefix}.private.net."
+  project     = var.project_id
+  description = "private dns weka.private.net"
+  visibility  = "private"
+
+  private_visibility_config {
+    dynamic "networks" {
+      for_each = var.network_self_links
+      content {
+        network_url = networks.value
+      }
+    }
+  }
+}
+
+resource "google_vpc_access_connector" "connector" {
+  provider = google-beta
+  project  = var.project_id
+  name     = "${var.prefix}-connector"
+  region   = lookup(local.vpc_connector_region_map, var.region, var.region)
+  subnet {
+    name       = var.subnetwork_names[0]
+    project_id = var.project_id
+  }
+  lifecycle {
+    ignore_changes = [network]
+  }
+}
 
 module "weka_deployment" {
   source                         = "github.com/fluidnumerics/terraform-gcp-weka"
@@ -86,6 +123,9 @@ module "weka_deployment" {
   tiering_obs_name               = var.tiering_obs_name
   tiering_enable_obs_integration = var.tiering_enable_obs_integration
   tiering_enable_ssd_percent     = var.tiering_ssd_percent
+  private_dns_name               = google_dns_managed_zone.private_zone.dns_name
+  private_zone_name              = google_dns_managed_zone.private_zone.name
+  vpc_connector_name             = google_vpc_access_connector.connector.id
 }
 
 # Resource needed to get ip addresses of the weka backends -- use the lb url
