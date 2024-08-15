@@ -1,0 +1,146 @@
+# Copyright 2024 Fluid Numerics LLC
+#
+# Redistribution and use in source and binary forms, with or without modification, 
+# are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice, 
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# 3. Neither the name of the copyright holder nor the names of its contributors 
+#    may be used to endorse or promote products derived from this software without 
+#    specific prior written permission.
+
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND 
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+# OF SUCH DAMAGE.
+
+blueprint_name: aiml-slurm6-weka4
+
+vars:
+  project_id: ## Set GCP Project ID Here ##
+  weka_token: ## Obtain a token from https://get.weka.io ##
+  deployment_name: aiml-slurm6-weka4
+  network_name_prefix: aiml
+  region: us-east4
+  zone: us-east4-b
+  weka_version: 4.2.11
+  custom_image:
+    family: slurm6-weka4
+    project: $(vars.project_id)
+  disk_size: 64
+
+deployment_groups:
+- group: primary
+  modules:
+  - id: image_network
+    source: modules/network/vpc
+
+  - id: weka_install_script
+    source: modules/scripts/startup-script
+    settings:
+      runners:
+      - type: shell
+        destination: install_weka.sh
+        content: |
+          #!/bin/sh
+          set -x
+          wget --auth-no-challenge https://$(vars.weka_token):@get.weka.io/dist/v1/pkg/weka-$(vars.weka_version).tar -O /tmp/weka.tar
+          mkdir -p /tmp/weka
+          tar -xvf /tmp/weka.tar -C /tmp/weka --strip-components=1
+          /tmp/weka/install.sh
+
+- group: packer
+  modules:
+  - id: weka-enabled-image
+    source: modules/packer/custom-image
+    kind: packer
+    use:
+    - image_network
+    - weka_install_script
+    settings:
+      source_image_project_id: [schedmd-slurm-public]
+      # see latest in https://github.com/GoogleCloudPlatform/slurm-gcp/blob/master/docs/images.md#published-image-family
+      source_image_family: slurm-gcp-6-6-ubuntu-2004-lts
+      # You can find size of source image by using following command
+      # gcloud compute images describe-from-family <source_image_family> --project schedmd-slurm-public
+      disk_size: $(vars.disk_size)
+      image_family: $(vars.custom_image.family)
+      state_timeout: 15m
+
+- group: cluster
+  modules:
+
+  - id: multivpc
+    source: modules/network/multivpc
+    settings:
+      network_name_prefix: $(vars.network_name_prefix)
+      network_count: 4
+      global_ip_address_range: 10.0.0.0/9
+      subnetwork_cidr_suffix: 20
+
+  - id: primary_vpc
+    source: modules/network/pre-existing-vpc
+    settings:
+      network_name: $(multivpc.network_names[0])
+      subnetwork_name: $(multivpc.subnetwork_names[0])
+      region: $(vars.region)
+
+  - id: wekafs
+    source: github.com/FluidNumerics/weka-gcp-hpc-toolkit
+    use:
+    - multivpc
+    settings:
+      cluster_name: aiml 
+
+  - id: compute_nodeset
+    source: community/modules/compute/schedmd-slurm-gcp-v6-nodeset
+    use:
+    - primary_vpc
+    settings:
+      node_count_dynamic_max: 20
+      disk_size_gb: $(vars.disk_size)
+      instance_image: $(vars.custom_image)
+      instance_image_custom: true
+
+  - id: compute_partition
+    source: community/modules/compute/schedmd-slurm-gcp-v6-partition
+    use:
+    - compute_nodeset
+    settings:
+      partition_name: compute
+      is_default: true
+
+  - id: slurm_login
+    source: community/modules/scheduler/schedmd-slurm-gcp-v6-login
+    use:
+    - primary_vpc
+    settings:
+      name_prefix: login
+      enable_login_public_ips: true
+      disk_size_gb: $(vars.disk_size)
+      instance_image: $(vars.custom_image)
+      instance_image_custom: true
+
+  - id: slurm_controller
+    source: community/modules/scheduler/schedmd-slurm-gcp-v6-controller
+    use:
+    - primary_vpc
+    - compute_partition
+    - slurm_login
+    settings:
+      enable_controller_public_ips: true
+      disk_size_gb: $(vars.disk_size)
+      instance_image: $(vars.custom_image)
+      instance_image_custom: true
+       
