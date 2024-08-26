@@ -280,8 +280,3 @@ variable "local_mount" {
     error_message = "Local mountpoints have to start with '/'."
   }
 }
-variable "vpc_connector_range" {
-  type        = string
-  default     = "10.8.0.0/28"
-  description = "Cidr range for serverless vpc access"
-}
