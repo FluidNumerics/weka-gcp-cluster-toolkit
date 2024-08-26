@@ -85,13 +85,22 @@ resource "google_dns_managed_zone" "private_zone" {
   }
 }
 
+resource "google_compute_subnetwork" "connector_subnet" {
+  name                     = "${var.prefix}-subnet-connector"
+  project                  = var.project_id
+  ip_cidr_range            = var.vpc_connector_range
+  region                   = lookup(local.vpc_connector_region_map, var.region, var.region)
+  private_ip_google_access = true
+  network                  = var.network_names[0]
+}
+
 resource "google_vpc_access_connector" "connector" {
   provider = google-beta
   project  = var.project_id
   name     = "${var.prefix}-connector"
   region   = lookup(local.vpc_connector_region_map, var.region, var.region)
   subnet {
-    name       = var.subnetwork_names[0]
+    name       = google_compute_subnetwork.connector_subnet.name
     project_id = var.project_id
   }
   lifecycle {
