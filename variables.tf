@@ -150,8 +150,8 @@ variable "allow_weka_api_cidrs" {
 
 variable "source_image_id" {
   type        = string
-  description = "Source image ID to use, by default centos-7 is used, other distributions might work, but only centos-7 is tested by Weka with this TF module"
-  default     = "projects/centos-cloud/global/images/centos-7-v20220719"
+  description = "Source image for deployment (default: rocky-linux-8-v20240515). While other distributions may be compatible, only Rocky Linux 8 is officially tested with this Terraform module."
+  default     = "rocky-linux-8-v20240515"
 }
 
 variable "protection_level" {
