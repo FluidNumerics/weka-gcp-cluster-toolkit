@@ -155,13 +155,19 @@ data "google_compute_instance_group" "weka" {
 }
 
 # From the instance group, we can get the list of instances
-# # Get information about the first weka backend
-data "google_compute_instance" "weka_backend" {
-  self_link = data.google_compute_instance_group.weka.instances[0]
+locals {
+  weka_selflinks = data.google_compute_instance_group.weka.instances
 }
 
+# # Get information about each of the weka backends
+data "google_compute_instance" "weka_backend" {
+  count = 1
+  self_link = data.google_compute_instance_group.weka.instances[count.index].instance
+}
+
+# Get the full list of weka backend IP addresses
 locals {
-  weka_ip = data.google_compute_instance.weka_backend.network_interface.0.network_ip
+  weka_ips = [for backend in data.google_compute_instance.weka_backend : backend.network_interface.0.network_ip]
 }
 
 ### Destroy WEKA backend on terraform destroy
