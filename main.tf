@@ -176,13 +176,13 @@ locals {
 ### that are tracked by Terraform. This null_resource is used to call the
 ### cloud functions to de-provision the weka backends
 
-resource "null_resource" "destroy_weka_backends" {
-  provisioner "local-exec" {
-    when = destroy
-    command = "timeout 5m ./scripts/destroy_weka_backends.sh"
-    environment = {
-      TERMINATE_CLUSTER_URI = module.weka_deployment.terminate_cluster_uri
-      CLUSTER_NAME = var.cluster_name
-    }
-  }
-}
+# resource "null_resource" "destroy_weka_backends" {
+#   provisioner "local-exec" {
+#     when = destroy
+#     command = "timeout 5m ./scripts/destroy_weka_backends.sh"
+#     environment = {
+#       TERMINATE_CLUSTER_URI = module.weka_deployment.terminate_cluster_uri
+#       CLUSTER_NAME = var.cluster_name
+#     }
+#   }
+# }
