@@ -10,7 +10,7 @@ output "network_storage" {
     local_mount           = var.local_mount
     fs_type               = "wekafs"
     mount_options         = "net=udp,remove_after_secs=900"
-    server_ip             = weka_ips[0]
+    server_ip             = local.weka_ips[0]
     client_install_runner = ""
     mount_runner          = ""
     }
