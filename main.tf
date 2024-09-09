@@ -161,7 +161,7 @@ locals {
 
 # # Get information about each of the weka backends
 data "google_compute_instance" "weka_backend" {
-  count = length(weka_selflinks)
+  count = length(local.weka_selflinks)
   self_link = local.weka_selflinks[count.index]
 }
 
