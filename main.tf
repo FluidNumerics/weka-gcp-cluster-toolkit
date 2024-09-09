@@ -156,13 +156,13 @@ data "google_compute_instance_group" "weka" {
 
 # From the instance group, we can get the list of instances
 locals {
-  weka_selflinks = data.google_compute_instance_group.weka.instances
+  weka_selflinks = tolist(data.google_compute_instance_group.weka.instances)
 }
 
 # # Get information about each of the weka backends
 data "google_compute_instance" "weka_backend" {
   count = 1
-  self_link = data.google_compute_instance_group.weka.instances[count.index].instance
+  self_link = local.weka_selflinks[count.index]
 }
 
 # Get the full list of weka backend IP addresses
