@@ -137,28 +137,35 @@ module "weka_deployment" {
   vpc_connector_id               = google_vpc_access_connector.connector.id
 }
 
-# Resource needed to get ip addresses of the weka backends -- use the lb url
+# Wait for the cluster to be ready
+resource "null_resource" "wait_for_wekafs" {
+  provisioner "local-exec" {
+    command = "timeout 25m ./scripts/wait_for_wekafs_ready.sh"
+    environment = {
+      WEKA_CLUSTER_STATUS_URI = module.wekafs.get_cluster_status_uri
+    }
+  }
+}
 
 # # Get the instance group for the weka backends
-# data "google_compute_instance_group" "weka" {
-#     name = "${var.prefix}-${var.cluster_name}-instance-group"
-#     zone = var.zone
-# }
+data "google_compute_instance_group" "weka" {
+    name = "${var.prefix}-${var.cluster_name}-instance-group"
+    zone = var.zone
+    depends_on = [ null_resource.wait_for_wekafs ]
+}
 
-# # Need to wait for the 
-
-# # From the instance group, we can get the list of instances
-# locals {
-#   weka_selflinks = data.google_compute_instance_group.weka.instances
-# }
+# From the instance group, we can get the list of instances
+locals {
+  weka_selflinks = data.google_compute_instance_group.weka.instances
+}
 
 # # Get information about each of the weka backends
-# data "google_compute_instance" "weka_backend" {
-#   count = length(weka_selflinks)
-#   self_link = local.weka_selflinks[count.index]
-# }
+data "google_compute_instance" "weka_backend" {
+  count = length(weka_selflinks)
+  self_link = local.weka_selflinks[count.index]
+}
 
-# # Get the full list of weka backend IP addresses
-# locals {
-#   weka_ips = [for backend in data.google_compute_instance.weka_backend : backend.network_interface.0.network_ip]
-# }
+# Get the full list of weka backend IP addresses
+locals {
+  weka_ips = [for backend in data.google_compute_instance.weka_backend : backend.network_interface.0.network_ip]
+}
