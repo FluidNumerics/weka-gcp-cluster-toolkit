@@ -140,7 +140,7 @@ module "weka_deployment" {
 # Wait for the cluster to be ready
 resource "null_resource" "wait_for_wekafs" {
   provisioner "local-exec" {
-    command = "timeout 25m ./scripts/wait_for_wekafs_ready.sh"
+    command = "timeout 25m ${path.module}/scripts/wait_for_wekafs_ready.sh"
     environment = {
       WEKA_CLUSTER_STATUS_URI = module.weka_deployment.get_cluster_status_uri
     }
