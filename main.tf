@@ -177,13 +177,12 @@ locals {
 ## cloud functions to de-provision the weka backends
 
 resource "terraform_data" "destroy_weka_backends" {
-  input = module.weka_deployment.terminate_cluster_uri
+  input = "${module.weka_deployment.terminate_cluster_uri}|${var.cluster_name}"
   provisioner "local-exec" {
     when = destroy
-    command = "timeout 20m ./scripts/destroy_weka_backends.sh"
+    command = "timeout 20m ${path.module}/scripts/destroy_weka_backends.sh"
     environment = {
-      TERMINATE_CLUSTER_URI = self.output
-      CLUSTER_NAME = var.cluster_name
+      INPUT=self.input
     }
   }
 }
