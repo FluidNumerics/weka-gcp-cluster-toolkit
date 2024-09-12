@@ -182,7 +182,7 @@ resource "terraform_data" "destroy_weka_backends" {
     when = destroy
     command = "timeout 20m ./scripts/destroy_weka_backends.sh"
     environment = {
-      TERMINATE_CLUSTER_URI = terraform_data.destroy_weka_backends.output
+      TERMINATE_CLUSTER_URI = self.output
       CLUSTER_NAME = var.cluster_name
     }
   }
