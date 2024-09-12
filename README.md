@@ -33,7 +33,7 @@ The Cluster Toolkit allows you to define complex architecture for high performan
 - Networking infrastructure for VM image baking and cluster deployment
 - A WEKA parallel filesystem consisting of six c2-standard-8 instances with each equipped with 2x 375GB NVME Local SSD's and four NIC's.
 - Slurm controller (c2-standard-4) and login node (c2-standard-4) with WEKA filesystem mounted to `/home`
-- Heterogeneous Slurm partition with VM instances equipped with A100 and L4 GPUs configured with Slurm [features](https://slurm.schedmd.com/sbatch.html#OPT_constraint) and additional memory set aside for the WEKA agent
+- Heterogeneous Slurm partition with VM instances equipped with A100 (a2-highgpu) and L4 (g2-standard) GPUs configured with Slurm [features](https://slurm.schedmd.com/sbatch.html#OPT_constraint) and additional memory set aside for the WEKA agent
 
 Note that in this deployment, all Slurm instances have a single NIC and mount WEKA using UDP mode. If you would like to work with DPDK mounts and would like assistance, [please open an issue](https://github.com/FluidNumerics/weka-gcp-hpc-toolkit/issues/new).
 
