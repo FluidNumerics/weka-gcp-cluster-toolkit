@@ -180,7 +180,7 @@ resource "terraform_data" "destroy_weka_backends" {
   input = "${module.weka_deployment.terminate_cluster_uri}|${var.cluster_name}"
   provisioner "local-exec" {
     when = destroy
-    command = "timeout 20m ${path.module}/scripts/destroy_weka_backends.sh"
+    command = "timeout 20m ${path.module}/scripts/terminate_weka_cluster.sh"
     environment = {
       INPUT=self.input
     }
